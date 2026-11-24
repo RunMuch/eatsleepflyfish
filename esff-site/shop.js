@@ -32,14 +32,10 @@
          : p.badge ? '<span class="tag tl">' + esc(p.badge) + '</span>' : '';
   }
   function tierOf(label) { var m = /^Tier (\d)/.exec(label || ''); return m ? +m[1] : 0; }
-  // 4-bar "signal" meter for fly tiers (Whisper = 1 bar ... Scream = 4 bars)
-  function signal(n) {
-    return '<span class="signal lv' + n + '" role="img" aria-label="Signal level ' + n + ' of 4"><i></i><i></i><i></i><i></i></span>';
-  }
 
   function card(p, reveal) {
     var alt = p.images[1] ? '<img class="alt" src="' + esc(sized(p.images[1], 700)) + '" alt="" loading="lazy">' : '';
-    var meta = p.tier ? signal(p.tier) + '<span>' + esc(p.kind) + '</span>' : '<span>' + esc(p.kind) + '</span>';
+    var meta = '<span>' + esc(p.kind) + '</span>';
     return '<a class="product shop-card' + (reveal ? ' reveal' : '') + '" href="' + productUrl(p) + '" data-id="' + esc(p.id) + '">' +
       '<div class="thumb sq ' + (p.tint || '') + '"><img src="' + esc(sized(p.images[0], 700)) + '" alt="' + esc(p.title) + '" loading="lazy">' + alt + tagFor(p) +
       '<span class="peek">View details <b aria-hidden="true">→</b></span></div>' +
@@ -103,7 +99,7 @@
         var n = f === 'all' ? pool.length : pool.filter(function (p) { return p[col.filterBy] === f; }).length;
         var t = tierOf(f);
         return '<button class="pill' + (t ? ' tier t' + t : '') + '" type="button" data-filter="' + esc(f) + '" aria-pressed="false">' +
-          (t ? signal(t) : '') + '<span class="pill-label">' + (f === 'all' ? 'All' : esc(f)) + '</span><span class="pill-n">' + n + '</span></button>';
+          '<span class="pill-label">' + (f === 'all' ? 'All' : esc(f)) + '</span><span class="pill-n">' + n + '</span></button>';
       }).join('');
     } else {
       pills.hidden = true;
@@ -161,7 +157,7 @@
       var note = col.notes && col.notes.filter(function (n) { return n[0] === filter; })[0];
       if (note) {
         noteEl.className = 'tier-note t' + tierOf(note[0]);
-        noteEl.innerHTML = signal(tierOf(note[0])) + '<b>' + esc(note[0]) + '</b><span>' + esc(note[1]) + '</span>';
+        noteEl.innerHTML = '<b>' + esc(note[0]) + '</b><span>' + esc(note[1]) + '</span>';
         noteEl.hidden = false;
         if (animate && canAnimate) noteEl.animate([{ opacity: 0, transform: 'translateY(-6px)' }, { opacity: 1, transform: 'none' }], { duration: 300, easing: EASE });
       } else {
@@ -300,7 +296,7 @@
       ? '<details class="acc"><summary>Delivery &amp; guarantee</summary><div class="acc-body"><p>' + esc(p.delivery) + '</p><p>Every order is covered by our 30-day guarantee: no questions asked, money back.</p></div></details>'
       : '<details class="acc"><summary>Shipping &amp; guarantee</summary><div class="acc-body"><p>Free shipping on orders over [$AMOUNT]. Every order is covered by our 30-day guarantee: no questions asked, money back.</p></div></details>';
     var tierLine = p.tier
-      ? '<a class="tier-note t' + p.tier + '" href="' + shopUrl('flies', p.group) + '">' + signal(p.tier) + '<b>' + esc(p.group) + '</b><span>See all →</span></a>'
+      ? '<a class="tier-note t' + p.tier + '" href="' + shopUrl('flies', p.group) + '"><b>' + esc(p.group) + '</b><span>See all →</span></a>'
       : '';
 
     pdp.innerHTML =

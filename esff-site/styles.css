@@ -298,15 +298,8 @@ h1,h2,h3,p{margin:0}
 
 /* tier colors: signal intensity, quiet to loud */
 .t1{--tc:#7fa58c} .t2{--tc:#5b9bb5} .t3{--tc:#e0a458} .t4{--tc:#e0645a}
-.signal{display:inline-flex;align-items:flex-end;gap:2px;height:14px;flex:0 0 auto}
-.signal i{width:4px;border-radius:1px;background:rgba(22,36,31,.16);transition:background .3s}
-.signal i:nth-child(1){height:5px} .signal i:nth-child(2){height:8px} .signal i:nth-child(3){height:11px} .signal i:nth-child(4){height:14px}
-.signal.lv1 i:nth-child(-n+1),.signal.lv2 i:nth-child(-n+2),.signal.lv3 i:nth-child(-n+3),.signal.lv4 i:nth-child(-n+4){background:var(--tc,var(--copper))}
-.signal.lv1{--tc:#7fa58c} .signal.lv2{--tc:#5b9bb5} .signal.lv3{--tc:#e0a458} .signal.lv4{--tc:#e0645a}
 .pill-thumb.tier{background:var(--tc)}
 .pill.tier.is-on{color:var(--ink)}
-.pill.tier.is-on .signal i{background:rgba(16,26,22,.25)}
-.pill.tier.is-on .signal.lv1 i:nth-child(-n+1),.pill.tier.is-on .signal.lv2 i:nth-child(-n+2),.pill.tier.is-on .signal.lv3 i:nth-child(-n+3),.pill.tier.is-on .signal.lv4 i:nth-child(-n+4){background:var(--ink)}
 .pill.tier.is-on .pill-n{background:rgba(16,26,22,.14)}
 
 /* count + tier note */

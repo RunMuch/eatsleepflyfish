@@ -144,13 +144,22 @@
     { name: 'Tier 4 · Scream', use: 'Stocked fish · dirty water · forced reaction', tint: 't4',
       flies: ['Peach Egg', 'Chartreuse Egg', 'Cream Mop', 'Squirmy Worm', 'Bright Megg'] }
   ];
+  // FILLER PRICES so the shop looks finished; replace with the real ones from the live store
+  var FILLER_PRICE = { egg: 2.75, mop: 3.25, worm: 2.95, standard: 3.50 };
+  function fillerPrice(name) {
+    if (/egg|megg/i.test(name)) return FILLER_PRICE.egg;
+    if (/mop/i.test(name)) return FILLER_PRICE.mop;
+    if (/worm/i.test(name)) return FILLER_PRICE.worm;
+    return FILLER_PRICE.standard;
+  }
+
   TIERS.forEach(function (t, ti) {
     t.flies.forEach(function (name) {
       P.push({
         id: 'fly-' + name.toLowerCase().replace(/[’']/g, '').replace(/[^a-z0-9]+/g, '-'),
         cat: 'flies', group: t.name, tier: ti + 1,
         title: name, kind: t.name, line: 'Flies · ' + t.name,
-        price: null, tint: t.tint,
+        price: fillerPrice(name), tint: t.tint,
         short: t.name + ': ' + t.use + '.',
         images: ['assets/bokeh.jpg'],
         options: [{ name: 'Hook size', values: ['14', '16', '18'] }, { name: 'Pack', values: ['Single', '3-pack', '6-pack'] }],
