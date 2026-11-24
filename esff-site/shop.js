@@ -8,6 +8,9 @@
   var PRODUCTS = window.ESFF_PRODUCTS || [];
   var COLLECTIONS = window.ESFF_COLLECTIONS || {};
   var params = new URLSearchParams(location.search);
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var canAnimate = !reduce && typeof Element.prototype.animate === 'function';
+  var EASE = 'cubic-bezier(.2,.8,.2,1)';
 
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
@@ -28,12 +31,19 @@
     return p.soldOut ? '<span class="tag tl sold">Sold out</span>'
          : p.badge ? '<span class="tag tl">' + esc(p.badge) + '</span>' : '';
   }
+  function tierOf(label) { var m = /^Tier (\d)/.exec(label || ''); return m ? +m[1] : 0; }
+  // 4-bar "signal" meter for fly tiers (Whisper = 1 bar ... Scream = 4 bars)
+  function signal(n) {
+    return '<span class="signal lv' + n + '" role="img" aria-label="Signal level ' + n + ' of 4"><i></i><i></i><i></i><i></i></span>';
+  }
 
-  function card(p) {
+  function card(p, reveal) {
     var alt = p.images[1] ? '<img class="alt" src="' + esc(sized(p.images[1], 700)) + '" alt="" loading="lazy">' : '';
-    return '<a class="product reveal" href="' + productUrl(p) + '">' +
-      '<div class="thumb sq ' + (p.tint || '') + '"><img src="' + esc(sized(p.images[0], 700)) + '" alt="' + esc(p.title) + '" loading="lazy">' + alt + tagFor(p) + '</div>' +
-      '<h3>' + esc(p.title) + '</h3><p>' + esc(p.kind) + '</p><p class="price">' + money(p) + '</p></a>';
+    var meta = p.tier ? signal(p.tier) + '<span>' + esc(p.kind) + '</span>' : '<span>' + esc(p.kind) + '</span>';
+    return '<a class="product shop-card' + (reveal ? ' reveal' : '') + '" href="' + productUrl(p) + '" data-id="' + esc(p.id) + '">' +
+      '<div class="thumb sq ' + (p.tint || '') + '"><img src="' + esc(sized(p.images[0], 700)) + '" alt="' + esc(p.title) + '" loading="lazy">' + alt + tagFor(p) +
+      '<span class="peek">View details <b aria-hidden="true">→</b></span></div>' +
+      '<h3>' + esc(p.title) + '</h3><p class="card-meta">' + meta + '</p><p class="price">' + money(p) + '</p></a>';
   }
 
   // ---------- cart count (front-end preview only) ----------
@@ -42,72 +52,201 @@
   function setCart(n) {
     try { localStorage.setItem(CART_KEY, String(n)); } catch (e) { /* storage blocked: count won't persist */ }
     var el = document.getElementById('cart-count');
-    if (el) el.textContent = n;
+    if (el) {
+      var changed = el.textContent !== String(n);
+      el.textContent = n;
+      if (changed && canAnimate && n > 0) {
+        el.parentNode.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.12)' }, { transform: 'scale(1)' }], { duration: 360, easing: EASE });
+      }
+    }
   }
   setCart(getCart());
 
+  // keep sticky bars just under the header
+  var header = document.querySelector('.site-header');
+  function setHeaderH() { if (header) document.documentElement.style.setProperty('--header-h', header.offsetHeight + 'px'); }
+  setHeaderH();
+  window.addEventListener('resize', setHeaderH);
+
   // ---------- collection page ----------
-  var sections = document.getElementById('coll-sections');
-  if (sections) {
+  var grid = document.getElementById('coll-grid');
+  if (grid) {
     var cid = COLLECTIONS[params.get('c')] ? params.get('c') : 'all';
     var col = COLLECTIONS[cid];
+    var pool = PRODUCTS.filter(function (p) { return cid === 'all' || p.cat === cid; });
+    var filter = col.filters.indexOf(params.get('f')) > -1 ? params.get('f') : 'all';
+    var sort = 'featured';
 
     document.title = col.title + ' — Eat Sleep Fly Fish';
     document.getElementById('coll-eyebrow').textContent = col.eyebrow;
     document.getElementById('coll-title').textContent = col.title;
     document.getElementById('coll-lede').textContent = col.lede;
     document.getElementById('coll-crumb').textContent = col.crumb;
+    var heroBg = document.getElementById('coll-hero-bg');
+    if (col.hero) {
+      heroBg.style.backgroundImage = 'url("' + col.hero + '")';
+      requestAnimationFrame(function () { heroBg.classList.add('in'); });
+    }
 
-    // category links across the top
+    // category tabs
     document.getElementById('coll-tabs').innerHTML = Object.keys(COLLECTIONS).map(function (k) {
-      return '<a href="' + shopUrl(k) + '"' + (k === cid ? ' aria-current="page"' : '') + '>' + esc(COLLECTIONS[k].crumb) + '</a>';
+      var n = PRODUCTS.filter(function (p) { return k === 'all' || p.cat === k; }).length;
+      return '<a href="' + shopUrl(k) + '"' + (k === cid ? ' aria-current="page"' : '') + '>' + esc(COLLECTIONS[k].crumb) + ' <span>' + n + '</span></a>';
     }).join('');
 
-    // Build the sections:
-    //   all products -> one section per collection (first 4 items + "Shop all" link)
-    //   flies        -> one section per tier
-    //   others       -> a single grid
-    function slug(s) { return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
-    var groups;
-    if (cid === 'all') {
-      groups = Object.keys(COLLECTIONS).filter(function (k) { return k !== 'all'; }).map(function (k) {
-        var items = PRODUCTS.filter(function (p) { return p.cat === k; });
-        return { id: k, title: COLLECTIONS[k].crumb, sub: COLLECTIONS[k].lede, items: items.slice(0, 4),
-                 more: { href: shopUrl(k), label: 'Shop all ' + items.length + ' →' } };
-      });
-    } else if (col.groups) {
-      groups = col.groups.map(function (g) {
-        return { id: slug(g[0]), title: g[0], sub: g[1], items: PRODUCTS.filter(function (p) { return p.cat === cid && p.group === g[0]; }) };
-      });
+    // filter buttons, each with a live count, plus a highlight that slides to the active one
+    var pills = document.getElementById('pills');
+    var bar = document.getElementById('filter-bar');
+    var hasFilters = col.filters.length > 0;
+    if (hasFilters) {
+      pills.innerHTML = '<span class="pill-thumb" aria-hidden="true"></span>' + ['all'].concat(col.filters).map(function (f) {
+        var n = f === 'all' ? pool.length : pool.filter(function (p) { return p[col.filterBy] === f; }).length;
+        var t = tierOf(f);
+        return '<button class="pill' + (t ? ' tier t' + t : '') + '" type="button" data-filter="' + esc(f) + '" aria-pressed="false">' +
+          (t ? signal(t) : '') + '<span class="pill-label">' + (f === 'all' ? 'All' : esc(f)) + '</span><span class="pill-n">' + n + '</span></button>';
+      }).join('');
     } else {
-      groups = [{ items: PRODUCTS.filter(function (p) { return p.cat === cid; }) }];
+      pills.hidden = true;
+    }
+    var thumb = pills.querySelector('.pill-thumb');
+    function moveThumb(animate) {
+      var b = pills.querySelector('.pill.is-on');
+      if (!b || !thumb) return;
+      thumb.style.transition = animate && !reduce ? '' : 'none';
+      thumb.style.width = b.offsetWidth + 'px';
+      thumb.style.height = b.offsetHeight + 'px';
+      thumb.style.transform = 'translate(' + b.offsetLeft + 'px,' + b.offsetTop + 'px)';
+      thumb.className = 'pill-thumb' + (b.classList.contains('tier') ? ' tier t' + tierOf(b.getAttribute('data-filter')) : '');
+      // keep the active button visible when the row scrolls sideways on phones
+      var left = b.offsetLeft - 16, right = b.offsetLeft + b.offsetWidth + 16;
+      if (left < pills.scrollLeft) pills.scrollTo({ left: left, behavior: animate ? 'smooth' : 'auto' });
+      else if (right > pills.scrollLeft + pills.clientWidth) pills.scrollTo({ left: right - pills.clientWidth, behavior: animate ? 'smooth' : 'auto' });
+    }
+    window.addEventListener('resize', function () { moveThumb(false); });
+
+    // sort options (price sorts only when the products have prices)
+    var sortSel = document.getElementById('sort');
+    var hasPrices = pool.some(function (p) { return p.price != null; });
+    sortSel.innerHTML = '<option value="featured">Featured</option><option value="az">Name A–Z</option>' +
+      (hasPrices ? '<option value="low">Price: low to high</option><option value="high">Price: high to low</option>' : '');
+
+    // shadow on the filter bar once it sticks
+    var sentinel = document.createElement('div');
+    bar.parentNode.insertBefore(sentinel, bar);
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (en) { bar.classList.toggle('stuck', !en[0].isIntersecting); },
+        { rootMargin: '-' + ((header && header.offsetHeight) || 0) + 'px 0px 0px 0px' }).observe(sentinel);
     }
 
-    sections.innerHTML = groups.map(function (g) {
-      var head = g.title
-        ? '<div class="section-head center"><h2 class="h">' + esc(g.title) + '</h2>' +
-          (g.sub ? '<p class="lede">' + esc(g.sub) + '</p>' : '') +
-          (g.more ? '<a class="link" href="' + g.more.href + '">' + esc(g.more.label) + '</a>' : '') + '</div>'
-        : '';
-      return '<section class="shop-group"' + (g.id ? ' id="' + g.id + '"' : '') + '>' + head +
-        '<div class="shop-grid">' + g.items.map(card).join('') + '</div></section>';
-    }).join('');
-    sections.querySelectorAll('.reveal').forEach(function (el) { el.classList.add('in'); });
+    // build every card once; filtering shows/hides and reorders them
+    grid.innerHTML = pool.map(function (p) { return card(p, false); }).join('');
+    var byId = {};
+    Array.prototype.forEach.call(grid.children, function (c) { byId[c.getAttribute('data-id')] = c; });
 
-    // shop.html?c=flies&f=Tier 2 · Speak jumps to that tier
-    var f = params.get('f');
-    var target = f && document.getElementById(slug(f));
-    if (target) {
-      requestAnimationFrame(function () {
-        var top = target.getBoundingClientRect().top + window.scrollY - document.querySelector('.site-header').offsetHeight - 12;
-        window.scrollTo(0, top);
+    var countEl = document.getElementById('coll-count');
+    var noteEl = document.getElementById('tier-note');
+
+    function currentList() {
+      var list = pool.filter(function (p) { return filter === 'all' || p[col.filterBy] === filter; });
+      var price = function (p) { return p.price == null ? Infinity : p.price; };
+      if (sort === 'az') list = list.slice().sort(function (a, b) { return a.title.localeCompare(b.title); });
+      if (sort === 'low') list = list.slice().sort(function (a, b) { return price(a) - price(b); });
+      if (sort === 'high') list = list.slice().sort(function (a, b) { return (b.price || 0) - (a.price || 0); });
+      return list;
+    }
+
+    function updateMeta(list, animate) {
+      var noun = cid === 'flies' ? (list.length === 1 ? 'fly' : 'flies') : (list.length === 1 ? 'product' : 'products');
+      countEl.innerHTML = 'Showing <b>' + list.length + '</b> ' + noun + (filter === 'all' ? '' : ' of ' + pool.length);
+      var note = col.notes && col.notes.filter(function (n) { return n[0] === filter; })[0];
+      if (note) {
+        noteEl.className = 'tier-note t' + tierOf(note[0]);
+        noteEl.innerHTML = signal(tierOf(note[0])) + '<b>' + esc(note[0]) + '</b><span>' + esc(note[1]) + '</span>';
+        noteEl.hidden = false;
+        if (animate && canAnimate) noteEl.animate([{ opacity: 0, transform: 'translateY(-6px)' }, { opacity: 1, transform: 'none' }], { duration: 300, easing: EASE });
+      } else {
+        noteEl.hidden = true;
+      }
+    }
+
+    var run = 0;
+    function apply(animate) {
+      var token = ++run;
+      var list = currentList();
+      var show = {};
+      list.forEach(function (p) { show[p.id] = true; });
+      var cards = Array.prototype.slice.call(grid.children);
+      // a new click interrupts any animation still running from the last one
+      if (canAnimate) cards.forEach(function (c) { c.getAnimations().forEach(function (a) { a.cancel(); }); });
+      updateMeta(list, animate);
+
+      function place() {
+        list.forEach(function (p) { grid.appendChild(byId[p.id]); });
+        cards.forEach(function (c) { c.hidden = !show[c.getAttribute('data-id')]; });
+      }
+
+      if (!animate || !canAnimate) { place(); if (!animate && canAnimate) enter(list, {}); return; }
+
+      // FLIP: remember where visible cards are, fade out the ones leaving, then glide the rest
+      var first = new Map();
+      cards.forEach(function (c) { if (!c.hidden) first.set(c, c.getBoundingClientRect()); });
+      var leaving = cards.filter(function (c) { return !c.hidden && !show[c.getAttribute('data-id')]; });
+      var outs = leaving.map(function (c) {
+        return c.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(.92)' }], { duration: 170, easing: 'ease-in', fill: 'forwards' }).finished;
+      });
+      Promise.all(outs).then(function () {
+        if (token !== run) return;
+        leaving.forEach(function (c) { c.getAnimations().forEach(function (a) { a.cancel(); }); });
+        place();
+        enter(list, first);
+      }).catch(function () { /* cancelled by a newer click */ });
+    }
+
+    function enter(list, first) {
+      var i = 0;
+      list.forEach(function (p) {
+        var c = byId[p.id], f = first.get ? first.get(c) : null;
+        if (f) {
+          var last = c.getBoundingClientRect();
+          var dx = f.left - last.left, dy = f.top - last.top;
+          if (dx || dy) c.animate([{ transform: 'translate(' + dx + 'px,' + dy + 'px)' }, { transform: 'none' }], { duration: 420, easing: EASE });
+        } else {
+          c.animate([{ opacity: 0, transform: 'translateY(22px) scale(.97)' }, { opacity: 1, transform: 'none' }],
+            { duration: 460, delay: Math.min(i++, 10) * 45, easing: EASE, fill: 'backwards' });
+        }
       });
     }
+
+    function setFilter(f, animate) {
+      filter = f;
+      pills.querySelectorAll('.pill').forEach(function (x) {
+        var on = x.getAttribute('data-filter') === f;
+        x.classList.toggle('is-on', on);
+        x.setAttribute('aria-pressed', String(on));
+      });
+      moveThumb(animate);
+      if (animate) history.replaceState(null, '', shopUrl(cid, f === 'all' ? '' : f));
+      apply(animate);
+    }
+
+    pills.addEventListener('click', function (e) {
+      var b = e.target.closest('.pill');
+      if (!b || b.getAttribute('data-filter') === filter) return;
+      setFilter(b.getAttribute('data-filter'), true);
+      // bring the grid back into view if the bar is stuck and the user is far down
+      var top = grid.getBoundingClientRect().top;
+      if (top < 0) window.scrollBy({ top: top - bar.offsetHeight - 24, behavior: reduce ? 'auto' : 'smooth' });
+    });
+    sortSel.addEventListener('change', function () { sort = sortSel.value; apply(true); });
+
+    if (hasFilters) setFilter(filter, false); else apply(false);
+    // fonts can change the button widths after load
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { moveThumb(false); });
 
     var promise = document.getElementById('promise');
     if (col.promise) {
       promise.innerHTML = '<div class="grid cols-' + col.promise.length + '">' + col.promise.map(function (r) {
-        return '<div><b class="h">' + esc(r[0]) + '</b><p>' + esc(r[1]) + '</p></div>';
+        return '<div class="reveal"><b class="h">' + esc(r[0]) + '</b><p>' + esc(r[1]) + '</p></div>';
       }).join('') + '</div>';
     } else {
       promise.hidden = true;
@@ -160,13 +299,16 @@
     var shipping = p.delivery
       ? '<details class="acc"><summary>Delivery &amp; guarantee</summary><div class="acc-body"><p>' + esc(p.delivery) + '</p><p>Every order is covered by our 30-day guarantee: no questions asked, money back.</p></div></details>'
       : '<details class="acc"><summary>Shipping &amp; guarantee</summary><div class="acc-body"><p>Free shipping on orders over [$AMOUNT]. Every order is covered by our 30-day guarantee: no questions asked, money back.</p></div></details>';
+    var tierLine = p.tier
+      ? '<a class="tier-note t' + p.tier + '" href="' + shopUrl('flies', p.group) + '">' + signal(p.tier) + '<b>' + esc(p.group) + '</b><span>See all →</span></a>'
+      : '';
 
     pdp.innerHTML =
       '<div class="pdp-gallery"><div class="pdp-main ' + (p.tint || '') + '">' + tagFor(p) + '<img id="pdp-img" src="' + esc(sized(p.images[0], 1400)) + '" alt="' + esc(p.title) + '"></div>' +
       (p.images.length > 1 ? '<div class="pdp-thumbs">' + thumbs + '</div>' : '') + '</div>' +
       '<div class="pdp-info">' +
         '<p class="eyebrow">' + esc(p.line) + '</p><h1 class="h">' + esc(p.title) + '</h1>' +
-        '<p class="pdp-price">' + money(p) + '</p><p class="pdp-short">' + esc(p.short) + '</p>' +
+        '<p class="pdp-price">' + money(p) + '</p>' + tierLine + '<p class="pdp-short">' + esc(p.short) + '</p>' +
         '<div class="pdp-form">' + opts + buy + '</div>' +
         '<ul class="assure">' + assure + '</ul>' +
         '<div class="acc-group">' +
@@ -177,12 +319,12 @@
         '</div>' +
       '</div>';
 
-    // related: same collection first, then anything else
+    // related: same group first, then the rest of the collection
     var related = PRODUCTS.filter(function (x) { return x !== p && x.cat === p.cat && x.group === p.group; })
       .concat(PRODUCTS.filter(function (x) { return x !== p && x.cat === p.cat && x.group !== p.group; }))
       .slice(0, 3);
     document.getElementById('related-title').textContent = p.cat === 'flies' ? 'More flies' : p.cat === 'learn' ? 'Keep learning' : 'More from Highland';
-    document.getElementById('related-grid').innerHTML = related.map(card).join('');
+    document.getElementById('related-grid').innerHTML = related.map(function (x) { return card(x, true); }).join('');
     document.getElementById('related-all').href = shopUrl(p.cat);
 
     // gallery thumbs
@@ -190,6 +332,7 @@
     pdp.querySelectorAll('.pdp-thumb').forEach(function (t) {
       t.addEventListener('click', function () {
         main.src = t.getAttribute('data-src');
+        if (canAnimate) main.animate([{ opacity: .3 }, { opacity: 1 }], { duration: 280 });
         pdp.querySelectorAll('.pdp-thumb').forEach(function (x) {
           x.classList.toggle('is-on', x === t);
           if (x === t) x.setAttribute('aria-current', 'true'); else x.removeAttribute('aria-current');
