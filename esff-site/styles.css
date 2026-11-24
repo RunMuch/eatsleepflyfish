@@ -35,8 +35,8 @@ h1,h2,h3,p{margin:0}
 .site-header{position:sticky;top:0;z-index:50;background:var(--ink);color:#fff;border-bottom:1px solid #26382f;transition:box-shadow .25s}
 .site-header.scrolled{box-shadow:0 6px 24px rgba(0,0,0,.35)}
 .header-row{display:flex;align-items:center;justify-content:space-between;gap:20px 32px;padding-top:16px;padding-bottom:16px}
-.brand{font-size:26px;letter-spacing:.1em}
-.nav{display:flex;gap:28px;font-size:14px;font-weight:500;letter-spacing:.04em}
+.brand{font-size:26px;letter-spacing:.1em;white-space:nowrap}
+.nav{display:flex;gap:28px;font-size:14px;font-weight:500;letter-spacing:.04em;white-space:nowrap}
 .nav a:hover{color:var(--amber)}
 .header-actions{display:flex;gap:10px}
 .icon-btn,.cart-btn{height:44px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid #3a5045;color:#fff;border-radius:2px;font-size:14px;cursor:pointer}
@@ -248,17 +248,25 @@ h1,h2,h3,p{margin:0}
   .cols-3{grid-template-columns:1fr}
   .about-grid{grid-template-columns:1fr;gap:32px}
   .about-img{order:-1;width:100%;aspect-ratio:4/3}
+  .about-copy{text-align:center;max-width:640px;margin:0 auto}
+  .about-copy .stats{justify-content:center}
 }
-@media (max-width:860px){
-  .nav-toggle{display:flex}
-  .nav{position:absolute;left:0;right:0;top:100%;background:var(--ink);flex-direction:column;gap:0;padding:8px 20px 18px;border-bottom:1px solid #26382f;display:none}
+@media (max-width:1100px){
+  .header-row{position:relative;gap:10px}
+  .brand{font-size:22px;margin-right:auto}
+  .header-actions{order:2}
+  .nav-toggle{display:flex;order:3;flex-shrink:0}
+  .nav{position:absolute;left:0;right:0;top:100%;background:var(--ink);flex-direction:column;gap:0;padding:4px 40px 16px;border-bottom:1px solid #26382f;box-shadow:0 14px 24px rgba(0,0,0,.35);display:none;max-height:calc(100vh - 80px);overflow-y:auto}
   .nav.open{display:flex}
-  .nav a{padding:14px 0;border-bottom:1px solid #26382f}
-  .header-row{position:relative}
-  .brand{font-size:22px}
+  .nav a{padding:15px 0;border-bottom:1px solid #26382f;font-size:15px}
+  .nav a:last-child{border-bottom:0}
 }
 @media (max-width:560px){
   .container{padding:0 20px}
+  .brand{font-size:19px;letter-spacing:.06em}
+  .header-actions .icon-btn{display:none}
+  .cart-btn{padding:0 12px;font-size:13px}
+  .nav{padding:4px 20px 16px}
   .cols-4{grid-template-columns:1fr 1fr;gap:16px}
   .tile span{font-size:22px}
   .hero{min-height:620px}
