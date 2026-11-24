@@ -1,33 +1,46 @@
-/* Shop preview: renders shop.html and product.html from window.ESFF_PRODUCTS (products.js).
-   Load order on those pages: products.js, shop.js, then script.js (which runs the scroll reveal). */
+/* Shop preview: renders shop.html and product.html from products.js, and keeps the header cart count.
+   Load order: products.js (shop/product pages only), shop.js, then script.js (which runs the scroll reveal).
+     shop.html?c=<collection>&f=<filter>   e.g. shop.html?c=flies&f=Tier 2 · Speak
+     product.html?p=<product id> */
 (function () {
   'use strict';
 
   var PRODUCTS = window.ESFF_PRODUCTS || [];
+  var COLLECTIONS = window.ESFF_COLLECTIONS || {};
+  var params = new URLSearchParams(location.search);
 
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
-  function sized(url, w) { return url + (url.indexOf('?') > -1 ? '&' : '?') + 'width=' + w; }
-  function money(p) { return (p.from ? 'From ' : '') + '$' + p.price.toFixed(2); }
-  function url(p) { return 'product.html?p=' + encodeURIComponent(p.id); }
+  function sized(src, w) {
+    if (src.indexOf('cdn.shopify.com') < 0) return src;
+    return src + (src.indexOf('?') > -1 ? '&' : '?') + 'width=' + w;
+  }
+  function money(p) {
+    if (p.price == null) return '[Price]';
+    return (p.from ? 'From ' : '') + '$' + p.price.toFixed(2) + (p.unit || '');
+  }
+  function productUrl(p) { return 'product.html?p=' + encodeURIComponent(p.id); }
+  function shopUrl(c, f) { return 'shop.html?c=' + encodeURIComponent(c) + (f ? '&f=' + encodeURIComponent(f) : ''); }
+  function tagFor(p) {
+    return p.soldOut ? '<span class="tag tl sold">Sold out</span>'
+         : p.badge ? '<span class="tag tl">' + esc(p.badge) + '</span>' : '';
+  }
 
   function card(p) {
-    var tag = p.soldOut ? '<span class="tag tl sold">Sold out</span>'
-            : p.badge ? '<span class="tag tl">' + esc(p.badge) + '</span>' : '';
     var alt = p.images[1] ? '<img class="alt" src="' + esc(sized(p.images[1], 700)) + '" alt="" loading="lazy">' : '';
-    return '<a class="product reveal" href="' + url(p) + '">' +
-      '<div class="thumb sq"><img src="' + esc(sized(p.images[0], 700)) + '" alt="' + esc(p.title) + '" loading="lazy">' + alt + tag + '</div>' +
+    return '<a class="product reveal" href="' + productUrl(p) + '">' +
+      '<div class="thumb sq ' + (p.tint || '') + '"><img src="' + esc(sized(p.images[0], 700)) + '" alt="' + esc(p.title) + '" loading="lazy">' + alt + tagFor(p) + '</div>' +
       '<h3>' + esc(p.title) + '</h3><p>' + esc(p.kind) + '</p><p class="price">' + money(p) + '</p></a>';
   }
 
-  // ---------- cart count (front-end preview only; real checkout stays on Shopify) ----------
+  // ---------- cart count (front-end preview only) ----------
   var CART_KEY = 'esff-cart-count';
   function getCart() { try { return +localStorage.getItem(CART_KEY) || 0; } catch (e) { return 0; } }
   function setCart(n) {
-    try { localStorage.setItem(CART_KEY, String(n)); } catch (e) { /* storage blocked: count just won't persist */ }
+    try { localStorage.setItem(CART_KEY, String(n)); } catch (e) { /* storage blocked: count won't persist */ }
     var el = document.getElementById('cart-count');
     if (el) el.textContent = n;
   }
@@ -36,41 +49,83 @@
   // ---------- collection page ----------
   var grid = document.getElementById('coll-grid');
   if (grid) {
-    var filter = 'all', sort = 'featured';
+    var cid = COLLECTIONS[params.get('c')] ? params.get('c') : 'all';
+    var col = COLLECTIONS[cid];
+    var pool = PRODUCTS.filter(function (p) { return cid === 'all' || p.cat === cid; });
+    var filter = col.filters.indexOf(params.get('f')) > -1 ? params.get('f') : 'all';
+    var sort = 'featured';
+
+    document.title = col.title + ' — Eat Sleep Fly Fish';
+    document.getElementById('coll-eyebrow').textContent = col.eyebrow;
+    document.getElementById('coll-title').textContent = col.title;
+    document.getElementById('coll-lede').textContent = col.lede;
+    document.getElementById('coll-crumb').textContent = col.crumb;
+
+    // category links across the top
+    document.getElementById('coll-tabs').innerHTML = Object.keys(COLLECTIONS).map(function (k) {
+      return '<a href="' + shopUrl(k) + '"' + (k === cid ? ' aria-current="page"' : '') + '>' + esc(COLLECTIONS[k].crumb) + '</a>';
+    }).join('');
+
+    // filter pills
+    var pills = document.getElementById('pills');
+    if (col.filters.length) {
+      pills.innerHTML = ['all'].concat(col.filters).map(function (f) {
+        return '<button class="pill' + (f === filter ? ' is-on' : '') + '" type="button" data-filter="' + esc(f) + '" aria-pressed="' + (f === filter) + '">' + (f === 'all' ? 'All' : esc(f)) + '</button>';
+      }).join('');
+    }
+
+    // only offer price sorting when the products have prices
+    var sortWrap = document.getElementById('sort-wrap');
+    if (!pool.some(function (p) { return p.price != null; })) sortWrap.hidden = true;
+
     var countEl = document.getElementById('coll-count');
     function render() {
-      var list = PRODUCTS.filter(function (p) { return filter === 'all' || p.kind === filter; });
-      if (sort === 'low') list = list.slice().sort(function (a, b) { return a.price - b.price; });
-      if (sort === 'high') list = list.slice().sort(function (a, b) { return b.price - a.price; });
+      var list = pool.filter(function (p) { return filter === 'all' || p[col.filterBy] === filter; });
+      var priced = function (p) { return p.price == null ? Infinity : p.price; };
+      if (sort === 'low') list = list.slice().sort(function (a, b) { return priced(a) - priced(b); });
+      if (sort === 'high') list = list.slice().sort(function (a, b) { return (b.price || 0) - (a.price || 0); });
       grid.innerHTML = list.map(card).join('');
       grid.querySelectorAll('.reveal').forEach(function (el) { el.classList.add('in'); });
       countEl.textContent = list.length + (list.length === 1 ? ' product' : ' products');
     }
-    document.querySelectorAll('[data-filter]').forEach(function (b) {
-      b.addEventListener('click', function () {
-        filter = b.getAttribute('data-filter');
-        document.querySelectorAll('[data-filter]').forEach(function (x) {
-          x.classList.toggle('is-on', x === b);
-          x.setAttribute('aria-pressed', String(x === b));
-        });
-        render();
+    pills.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-filter]');
+      if (!b) return;
+      filter = b.getAttribute('data-filter');
+      pills.querySelectorAll('[data-filter]').forEach(function (x) {
+        x.classList.toggle('is-on', x === b);
+        x.setAttribute('aria-pressed', String(x === b));
       });
+      history.replaceState(null, '', shopUrl(cid, filter === 'all' ? '' : filter));
+      render();
     });
     document.getElementById('sort').addEventListener('change', function (e) { sort = e.target.value; render(); });
     render();
+
+    var promise = document.getElementById('promise');
+    if (col.promise) {
+      promise.innerHTML = '<div class="grid cols-' + col.promise.length + '">' + col.promise.map(function (r) {
+        return '<div><b class="h">' + esc(r[0]) + '</b><p>' + esc(r[1]) + '</p></div>';
+      }).join('') + '</div>';
+    } else {
+      promise.hidden = true;
+    }
   }
 
   // ---------- product page ----------
   var pdp = document.getElementById('pdp');
   if (pdp) {
-    var id = new URLSearchParams(location.search).get('p');
-    var p = PRODUCTS.filter(function (x) { return x.id === id; })[0] || PRODUCTS[0];
+    var p = PRODUCTS.filter(function (x) { return x.id === params.get('p'); })[0] || PRODUCTS[0];
+    var pc = COLLECTIONS[p.cat];
     document.title = p.title + ' — Eat Sleep Fly Fish';
 
-    var badge = p.soldOut ? '<span class="tag tl sold">Sold out</span>'
-              : p.badge ? '<span class="tag tl">' + esc(p.badge) + '</span>' : '';
+    var crumbCol = document.getElementById('crumb-collection');
+    crumbCol.textContent = pc.crumb;
+    crumbCol.href = shopUrl(p.cat);
+    document.getElementById('crumb-current').textContent = p.title;
+
     var thumbs = p.images.map(function (src, i) {
-      return '<button type="button" class="pdp-thumb' + (i === 0 ? ' is-on' : '') + '" data-src="' + esc(sized(src, 1400)) + '" aria-label="Show photo ' + (i + 1) + '"' + (i === 0 ? ' aria-current="true"' : '') + '><img src="' + esc(sized(src, 200)) + '" alt=""></button>';
+      return '<button type="button" class="pdp-thumb ' + (p.tint || '') + (i === 0 ? ' is-on' : '') + '" data-src="' + esc(sized(src, 1400)) + '" aria-label="Show photo ' + (i + 1) + '"' + (i === 0 ? ' aria-current="true"' : '') + '><img src="' + esc(sized(src, 200)) + '" alt=""></button>';
     }).join('');
     var opts = p.options.map(function (o, gi) {
       var chips = o.values.map(function (v, vi) {
@@ -83,10 +138,12 @@
         '<div class="notify"><label for="notify-email">Email me when it’s back</label>' +
         '<div class="notify-row"><input id="notify-email" type="email" placeholder="you@email.com" autocomplete="email"><button class="btn dark" type="button" id="notify-btn">Notify me</button></div>' +
         '<p class="form-msg" id="notify-msg" role="status" aria-live="polite"></p></div>'
-      : '<div class="buy-row"><div class="qty"><button type="button" data-qty="-1" aria-label="Decrease quantity">−</button>' +
-        '<input id="qty" type="number" value="1" min="1" max="10" inputmode="numeric" aria-label="Quantity">' +
-        '<button type="button" data-qty="1" aria-label="Increase quantity">+</button></div>' +
-        '<button class="btn add-to-cart" type="button" id="add-btn">Add to cart</button></div>' +
+      : '<div class="buy-row">' +
+        (p.cat === 'learn' ? '' :
+          '<div class="qty"><button type="button" data-qty="-1" aria-label="Decrease quantity">−</button>' +
+          '<input id="qty" type="number" value="1" min="1" max="10" inputmode="numeric" aria-label="Quantity">' +
+          '<button type="button" data-qty="1" aria-label="Increase quantity">+</button></div>') +
+        '<button class="btn add-to-cart" type="button" id="add-btn">' + esc(p.cta || 'Add to cart') + '</button></div>' +
         '<p class="added" id="added-msg" role="status" aria-live="polite"></p>';
     var icon = {
       truck: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.6"/><circle cx="17" cy="17.5" r="1.6"/></svg>',
@@ -98,10 +155,12 @@
       (p.kind === 'Fly rod' ? '<li>' + icon.star + 'Fished by 4 of 6 Team USA World Team members</li>' : '');
     var specs = p.specs.map(function (r) { return '<tr><th>' + esc(r[0]) + '</th><td>' + esc(r[1]) + '</td></tr>'; }).join('');
     var desc = p.description.map(function (d) { return '<p>' + esc(d) + '</p>'; }).join('');
+    var shipping = p.delivery
+      ? '<details class="acc"><summary>Delivery &amp; guarantee</summary><div class="acc-body"><p>' + esc(p.delivery) + '</p><p>Every order is covered by our 30-day guarantee: no questions asked, money back.</p></div></details>'
+      : '<details class="acc"><summary>Shipping &amp; guarantee</summary><div class="acc-body"><p>Free shipping on orders over [$AMOUNT]. Every order is covered by our 30-day guarantee: no questions asked, money back.</p></div></details>';
 
-    document.getElementById('crumb-current').textContent = p.title;
     pdp.innerHTML =
-      '<div class="pdp-gallery"><div class="pdp-main">' + badge + '<img id="pdp-img" src="' + esc(sized(p.images[0], 1400)) + '" alt="' + esc(p.title) + '"></div>' +
+      '<div class="pdp-gallery"><div class="pdp-main ' + (p.tint || '') + '">' + tagFor(p) + '<img id="pdp-img" src="' + esc(sized(p.images[0], 1400)) + '" alt="' + esc(p.title) + '"></div>' +
       (p.images.length > 1 ? '<div class="pdp-thumbs">' + thumbs + '</div>' : '') + '</div>' +
       '<div class="pdp-info">' +
         '<p class="eyebrow">' + esc(p.line) + '</p><h1 class="h">' + esc(p.title) + '</h1>' +
@@ -110,14 +169,19 @@
         '<ul class="assure">' + assure + '</ul>' +
         '<div class="acc-group">' +
           '<details class="acc" open><summary>Description</summary><div class="acc-body">' + desc + '</div></details>' +
-          '<details class="acc"><summary>Specifications</summary><div class="acc-body"><table class="specs">' + specs + '</table></div></details>' +
-          '<details class="acc"><summary>Shipping &amp; guarantee</summary><div class="acc-body"><p>Free shipping on orders over [$AMOUNT]. Every order is covered by our 30-day guarantee: no questions asked, money back.</p></div></details>' +
+          '<details class="acc"><summary>Details</summary><div class="acc-body"><table class="specs">' + specs + '</table></div></details>' +
+          shipping +
           '<details class="acc"><summary>Questions?</summary><div class="acc-body"><p>Call (888) 4HOOKSET or email <a class="link" href="mailto:info@eatsleepflyfish.com">info@eatsleepflyfish.com</a> and Roger will help you pick the right setup.</p></div></details>' +
         '</div>' +
       '</div>';
 
-    document.getElementById('related-grid').innerHTML =
-      PRODUCTS.filter(function (x) { return x !== p; }).slice(0, 3).map(card).join('');
+    // related: same collection first, then anything else
+    var related = PRODUCTS.filter(function (x) { return x !== p && x.cat === p.cat && x.group === p.group; })
+      .concat(PRODUCTS.filter(function (x) { return x !== p && x.cat === p.cat && x.group !== p.group; }))
+      .slice(0, 3);
+    document.getElementById('related-title').textContent = p.cat === 'flies' ? 'More flies' : p.cat === 'learn' ? 'Keep learning' : 'More from Highland';
+    document.getElementById('related-grid').innerHTML = related.map(card).join('');
+    document.getElementById('related-all').href = shopUrl(p.cat);
 
     // gallery thumbs
     var main = document.getElementById('pdp-img');
@@ -138,20 +202,25 @@
 
     // quantity + add to cart
     var qty = document.getElementById('qty');
-    if (qty) {
-      pdp.querySelectorAll('[data-qty]').forEach(function (b) {
-        b.addEventListener('click', function () {
-          qty.value = Math.min(10, Math.max(1, (+qty.value || 1) + +b.getAttribute('data-qty')));
-        });
+    pdp.querySelectorAll('[data-qty]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        qty.value = Math.min(10, Math.max(1, (+qty.value || 1) + +b.getAttribute('data-qty')));
       });
+    });
+    var addBtn = document.getElementById('add-btn');
+    if (addBtn) {
       var msgTimer;
-      document.getElementById('add-btn').addEventListener('click', function () {
-        var n = Math.min(10, Math.max(1, +qty.value || 1));
-        setCart(getCart() + n);
+      addBtn.addEventListener('click', function () {
         var m = document.getElementById('added-msg');
-        m.textContent = 'Added ' + n + ' to your cart.';
+        if (p.cta) {
+          m.textContent = 'Thanks! Roger will be in touch about dates. [Wire this to the application form.]';
+        } else {
+          var n = qty ? Math.min(10, Math.max(1, +qty.value || 1)) : 1;
+          setCart(getCart() + n);
+          m.textContent = 'Added ' + n + ' to your cart.';
+        }
         clearTimeout(msgTimer);
-        msgTimer = setTimeout(function () { m.textContent = ''; }, 3000);
+        msgTimer = setTimeout(function () { m.textContent = ''; }, 4000);
       });
     }
 

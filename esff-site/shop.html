@@ -47,22 +47,19 @@
 
 <section class="coll-hero">
   <div class="container">
-    <nav class="crumbs light" aria-label="Breadcrumb"><a href="index.html">Home</a><span aria-hidden="true">/</span><a href="index.html#shop">Shop</a><span aria-hidden="true">/</span><span aria-current="page">Fly Rods</span></nav>
-    <p class="eyebrow amber">Designed by Roger</p>
-    <h1 class="h">Highland Rod Company</h1>
-    <p>Fished by 4 of 6 Fly Fishing Team USA World Team members. Built for the precision the system demands.</p>
+    <nav class="crumbs light" aria-label="Breadcrumb"><a href="index.html">Home</a><span aria-hidden="true">/</span><a href="shop.html">Shop</a><span aria-hidden="true">/</span><span aria-current="page" id="coll-crumb"></span></nav>
+    <p class="eyebrow amber" id="coll-eyebrow"></p>
+    <h1 class="h" id="coll-title"></h1>
+    <p id="coll-lede"></p>
   </div>
 </section>
 
+<nav class="coll-tabs" aria-label="Shop categories"><div class="container" id="coll-tabs"></div></nav>
+
 <section class="container coll">
   <div class="toolbar">
-    <div class="pills" role="group" aria-label="Filter products">
-      <button class="pill is-on" type="button" data-filter="all" aria-pressed="true">All</button>
-      <button class="pill" type="button" data-filter="Fly rod" aria-pressed="false">Rods</button>
-      <button class="pill" type="button" data-filter="Fly reel" aria-pressed="false">Reels</button>
-      <button class="pill" type="button" data-filter="Replacement sections" aria-pressed="false">Parts</button>
-    </div>
-    <label class="sort"><span>Sort by</span>
+    <div class="pills" id="pills" role="group" aria-label="Filter products"></div>
+    <label class="sort" id="sort-wrap"><span>Sort by</span>
       <select id="sort">
         <option value="featured">Featured</option>
         <option value="low">Price: low to high</option>
@@ -74,13 +71,7 @@
   <div class="grid cols-4 coll-grid" id="coll-grid"></div>
 </section>
 
-<section class="container section promise">
-  <div class="grid cols-3">
-    <div><b class="h">Built to order</b><p>Stealth rods are built for you in 1–2 weeks.</p></div>
-    <div><b class="h">30-day guarantee</b><p>No questions asked, money back.</p></div>
-    <div><b class="h">Fished by Team USA</b><p>4 of 6 World Team members fish Highland.</p></div>
-  </div>
-</section>
+<section class="container section promise" id="promise"></section>
 
 </main>
 
@@ -88,13 +79,13 @@
   <div class="container footer-grid">
     <div><div class="h brand-foot">Eat Sleep Fly Fish</div>Johnson City, TN 37601<br>(888) 4HOOKSET<br><a href="mailto:info@eatsleepflyfish.com">info@eatsleepflyfish.com</a></div>
     <div><b>Shop</b><br>
-      <a href="shop.html">Fly Rods</a> · <a href="https://eatsleepflyfish.com/collections/fly-reels">Reels</a> · <a href="https://eatsleepflyfish.com/collections/fly-line">Lines</a><br>
-      <a href="https://eatsleepflyfish.com/collections/fly-boxes">Fly Boxes</a> · <a href="https://eatsleepflyfish.com/collections/flies/Flies">Flies</a> · <a href="https://eatsleepflyfish.com/collections/fly-tying">Fly Tying</a><br>
-      <a href="https://eatsleepflyfish.com/collections/apparel">Apparel</a> · <a href="https://eatsleepflyfish.com/collections/accessories">Accessories</a></div>
+      <a href="shop.html?c=rods">Fly Rods &amp; Reels</a><br>
+      <a href="shop.html?c=flies">Flies</a><br>
+      <a href="shop.html">All products</a></div>
     <div><b>Learn</b><br>
-      <a href="index.html#learn">Books &amp; Course</a><br>
-      <a href="https://eatsleepflyfish.com/products/instruction">Private Instruction</a><br>
-      <a href="https://eatsleepflyfish.com/blogs/news">Blog</a> · <a href="https://eatsleepflyfish.com/pages/contact-us">Contact Us</a></div>
+      <a href="shop.html?c=learn">Books &amp; Course</a><br>
+      <a href="product.html?p=instruction-day">Private Instruction</a><br>
+      <a href="mailto:info@eatsleepflyfish.com">Contact Us</a></div>
     <div><b>Satisfaction guaranteed</b><br>30 days, no questions asked, money back.</div>
   </div>
   <div class="container footer-base">© <span id="year">2026</span> Eat Sleep Fly Fish</div>

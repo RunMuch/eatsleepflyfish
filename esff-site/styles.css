@@ -253,6 +253,15 @@ h1,h2,h3,p{margin:0}
 .coll-hero .container{position:relative;z-index:1}
 .coll-hero h1{font-size:clamp(44px,7vw,96px);margin-bottom:16px}
 .coll-hero h1+p{max-width:560px;font-size:17px;line-height:1.6;color:#c4d0c9}
+.coll-tabs{background:var(--ink);border-bottom:1px solid #26382f}
+.coll-tabs .container{display:flex;gap:28px;overflow-x:auto;scrollbar-width:none}
+.coll-tabs .container::-webkit-scrollbar{display:none}
+.coll-tabs a{flex:0 0 auto;padding:16px 0 13px;border-bottom:3px solid transparent;color:#b6c4bc;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;transition:color .2s,border-color .2s}
+.coll-tabs a:hover{color:#fff}
+.coll-tabs a[aria-current]{color:#fff;border-color:var(--amber)}
+.coll-hero{border-bottom:0}
+.related .section-head .link{margin-top:12px}
+.toolbar:has(.pills:empty){justify-content:flex-end}
 .toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;padding:32px 0 14px;border-bottom:1px solid rgba(22,36,31,.12)}
 .pills{display:flex;flex-wrap:wrap;gap:8px}
 .pill{height:38px;padding:0 18px;border:1px solid #c9c0a9;border-radius:999px;background:transparent;color:var(--forest);font:600 13px Inter,sans-serif;letter-spacing:.04em;cursor:pointer;transition:background .2s,border-color .2s,color .2s}
