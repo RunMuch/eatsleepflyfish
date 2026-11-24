@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Highland Rod Company — Eat Sleep Fly Fish</title>
+<meta name="description" content="Highland competition fly rods, reels and replacement sections designed by Roger Wilson.">
+<meta name="theme-color" content="#16241f">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&amp;family=Fraunces:ital,wght@1,500&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<div class="promo">Free shipping on orders over [$AMOUNT] · 30-day money-back guarantee</div>
+
+<header class="site-header" id="top">
+  <div class="container header-row">
+    <a href="index.html" class="brand h">Eat Sleep Fly Fish</a>
+    <button class="nav-toggle" aria-expanded="false" aria-controls="primary-nav" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <nav id="primary-nav" class="nav" aria-label="Main">
+      <a href="shop.html" aria-current="page">Shop</a>
+      <a href="index.html#flies">Flies</a>
+      <a href="index.html#learn">Books &amp; Course</a>
+      <a href="index.html#instruction">Instruction</a>
+      <a href="index.html#about">About Roger</a>
+      <a href="index.html#field-card">Field Card</a>
+    </nav>
+    <div class="header-actions">
+      <button class="icon-btn" aria-label="Search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      </button>
+      <a href="#" class="cart-btn">Cart (<span id="cart-count">0</span>)</a>
+    </div>
+  </div>
+</header>
+
+<!-- THEME PREVIEW: product data lives in products.js. Remove this note before launch. -->
+<div class="preview-note">Theme preview · product descriptions, specs and options are sample content</div>
+
+<main id="main">
+
+<section class="coll-hero">
+  <div class="container">
+    <nav class="crumbs light" aria-label="Breadcrumb"><a href="index.html">Home</a><span aria-hidden="true">/</span><a href="index.html#shop">Shop</a><span aria-hidden="true">/</span><span aria-current="page">Fly Rods</span></nav>
+    <p class="eyebrow amber">Designed by Roger</p>
+    <h1 class="h">Highland Rod Company</h1>
+    <p>Fished by 4 of 6 Fly Fishing Team USA World Team members. Built for the precision the system demands.</p>
+  </div>
+</section>
+
+<section class="container coll">
+  <div class="toolbar">
+    <div class="pills" role="group" aria-label="Filter products">
+      <button class="pill is-on" type="button" data-filter="all" aria-pressed="true">All</button>
+      <button class="pill" type="button" data-filter="Fly rod" aria-pressed="false">Rods</button>
+      <button class="pill" type="button" data-filter="Fly reel" aria-pressed="false">Reels</button>
+      <button class="pill" type="button" data-filter="Replacement sections" aria-pressed="false">Parts</button>
+    </div>
+    <label class="sort"><span>Sort by</span>
+      <select id="sort">
+        <option value="featured">Featured</option>
+        <option value="low">Price: low to high</option>
+        <option value="high">Price: high to low</option>
+      </select>
+    </label>
+  </div>
+  <p class="count" id="coll-count" aria-live="polite"></p>
+  <div class="grid cols-4 coll-grid" id="coll-grid"></div>
+</section>
+
+<section class="container section promise">
+  <div class="grid cols-3">
+    <div><b class="h">Built to order</b><p>Stealth rods are built for you in 1–2 weeks.</p></div>
+    <div><b class="h">30-day guarantee</b><p>No questions asked, money back.</p></div>
+    <div><b class="h">Fished by Team USA</b><p>4 of 6 World Team members fish Highland.</p></div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div><div class="h brand-foot">Eat Sleep Fly Fish</div>Johnson City, TN 37601<br>(888) 4HOOKSET<br><a href="mailto:info@eatsleepflyfish.com">info@eatsleepflyfish.com</a></div>
+    <div><b>Shop</b><br>
+      <a href="shop.html">Fly Rods</a> · <a href="https://eatsleepflyfish.com/collections/fly-reels">Reels</a> · <a href="https://eatsleepflyfish.com/collections/fly-line">Lines</a><br>
+      <a href="https://eatsleepflyfish.com/collections/fly-boxes">Fly Boxes</a> · <a href="https://eatsleepflyfish.com/collections/flies/Flies">Flies</a> · <a href="https://eatsleepflyfish.com/collections/fly-tying">Fly Tying</a><br>
+      <a href="https://eatsleepflyfish.com/collections/apparel">Apparel</a> · <a href="https://eatsleepflyfish.com/collections/accessories">Accessories</a></div>
+    <div><b>Learn</b><br>
+      <a href="index.html#learn">Books &amp; Course</a><br>
+      <a href="https://eatsleepflyfish.com/products/instruction">Private Instruction</a><br>
+      <a href="https://eatsleepflyfish.com/blogs/news">Blog</a> · <a href="https://eatsleepflyfish.com/pages/contact-us">Contact Us</a></div>
+    <div><b>Satisfaction guaranteed</b><br>30 days, no questions asked, money back.</div>
+  </div>
+  <div class="container footer-base">© <span id="year">2026</span> Eat Sleep Fly Fish</div>
+</footer>
+
+<script src="products.js"></script>
+<script src="shop.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
