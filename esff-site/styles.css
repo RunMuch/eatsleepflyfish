@@ -260,19 +260,17 @@ h1,h2,h3,p{margin:0}
 .coll-tabs a:hover{color:#fff}
 .coll-tabs a[aria-current]{color:#fff;border-color:var(--amber)}
 .coll-hero{border-bottom:0}
-.related .section-head .link{margin-top:12px}
-.toolbar:has(.pills:empty){justify-content:flex-end}
-.toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;padding:32px 0 14px;border-bottom:1px solid rgba(22,36,31,.12)}
-.pills{display:flex;flex-wrap:wrap;gap:8px}
-.pill{height:38px;padding:0 18px;border:1px solid #c9c0a9;border-radius:999px;background:transparent;color:var(--forest);font:600 13px Inter,sans-serif;letter-spacing:.04em;cursor:pointer;transition:background .2s,border-color .2s,color .2s}
-.pill:hover{border-color:var(--forest)}
-.pill.is-on{background:var(--forest);border-color:var(--forest);color:#fff}
-.sort{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
-.sort select{height:38px;padding:0 12px;border:1px solid #c9c0a9;border-radius:2px;background:#fff;font:500 14px Inter,sans-serif;color:var(--forest)}
-.count{font-size:13px;color:var(--muted);padding:16px 0 8px}
-.coll-grid{padding-bottom:16px}
-.coll-grid .product h3,.related .product h3{font-size:16px}
-.promise{padding-top:48px;padding-bottom:72px}
+.section-head .link{margin-top:12px}
+/* product grid that centers any number of cards (no empty slot when a row isn't full) */
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,282px));justify-content:center;gap:36px 24px}
+.shop-grid .product h3{font-size:16px}
+.coll{padding-bottom:88px}
+.shop-group{padding-top:72px}
+.shop-group+.shop-group{margin-top:16px;border-top:1px solid rgba(22,36,31,.1)}
+.shop-group:first-child{padding-top:56px}
+.shop-group .section-head h2{font-size:clamp(30px,3.6vw,44px)}
+.shop-group .lede{margin-top:10px}
+.promise{padding-top:0;padding-bottom:72px}
 .promise .grid{border-top:1px solid rgba(22,36,31,.12);padding-top:40px;text-align:center}
 .promise b{display:block;font-size:26px;margin-bottom:6px}
 .promise p{font-size:14px;color:var(--muted)}
@@ -339,19 +337,19 @@ h1,h2,h3,p{margin:0}
   .pdp{grid-template-columns:1fr;gap:32px}
   .pdp-gallery{position:static}
   .pdp-main{aspect-ratio:1}
-  .related .cols-3{grid-template-columns:repeat(3,1fr)}
 }
 @media (max-width:560px){
   .crumbs{padding:16px 0;font-size:12px}
   .coll-hero{padding:32px 0 44px}
-  .toolbar{padding-top:24px}
-  .coll-grid{grid-template-columns:1fr 1fr;gap:16px}
+  .shop-grid{grid-template-columns:1fr 1fr;gap:28px 16px}
+  .shop-group{padding-top:52px}
+  .shop-group:first-child{padding-top:40px}
+  .coll{padding-bottom:64px}
   .promise .grid{gap:28px}
   .pdp-thumb{flex-basis:64px;height:64px}
   .pdp-price{font-size:21px}
   .pdp-short{font-size:16px}
-  .related .cols-3{grid-template-columns:1fr 1fr;gap:16px}
-  .related .cols-3>:nth-child(3){display:none}
+  .related .shop-grid>:nth-child(3){display:none}
   .pdp-quote{padding:40px 0}
 }
 

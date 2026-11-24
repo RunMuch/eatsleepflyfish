@@ -47,13 +47,10 @@
   setCart(getCart());
 
   // ---------- collection page ----------
-  var grid = document.getElementById('coll-grid');
-  if (grid) {
+  var sections = document.getElementById('coll-sections');
+  if (sections) {
     var cid = COLLECTIONS[params.get('c')] ? params.get('c') : 'all';
     var col = COLLECTIONS[cid];
-    var pool = PRODUCTS.filter(function (p) { return cid === 'all' || p.cat === cid; });
-    var filter = col.filters.indexOf(params.get('f')) > -1 ? params.get('f') : 'all';
-    var sort = 'featured';
 
     document.title = col.title + ' — Eat Sleep Fly Fish';
     document.getElementById('coll-eyebrow').textContent = col.eyebrow;
@@ -66,41 +63,46 @@
       return '<a href="' + shopUrl(k) + '"' + (k === cid ? ' aria-current="page"' : '') + '>' + esc(COLLECTIONS[k].crumb) + '</a>';
     }).join('');
 
-    // filter pills
-    var pills = document.getElementById('pills');
-    if (col.filters.length) {
-      pills.innerHTML = ['all'].concat(col.filters).map(function (f) {
-        return '<button class="pill' + (f === filter ? ' is-on' : '') + '" type="button" data-filter="' + esc(f) + '" aria-pressed="' + (f === filter) + '">' + (f === 'all' ? 'All' : esc(f)) + '</button>';
-      }).join('');
-    }
-
-    // only offer price sorting when the products have prices
-    var sortWrap = document.getElementById('sort-wrap');
-    if (!pool.some(function (p) { return p.price != null; })) sortWrap.hidden = true;
-
-    var countEl = document.getElementById('coll-count');
-    function render() {
-      var list = pool.filter(function (p) { return filter === 'all' || p[col.filterBy] === filter; });
-      var priced = function (p) { return p.price == null ? Infinity : p.price; };
-      if (sort === 'low') list = list.slice().sort(function (a, b) { return priced(a) - priced(b); });
-      if (sort === 'high') list = list.slice().sort(function (a, b) { return (b.price || 0) - (a.price || 0); });
-      grid.innerHTML = list.map(card).join('');
-      grid.querySelectorAll('.reveal').forEach(function (el) { el.classList.add('in'); });
-      countEl.textContent = list.length + (list.length === 1 ? ' product' : ' products');
-    }
-    pills.addEventListener('click', function (e) {
-      var b = e.target.closest('[data-filter]');
-      if (!b) return;
-      filter = b.getAttribute('data-filter');
-      pills.querySelectorAll('[data-filter]').forEach(function (x) {
-        x.classList.toggle('is-on', x === b);
-        x.setAttribute('aria-pressed', String(x === b));
+    // Build the sections:
+    //   all products -> one section per collection (first 4 items + "Shop all" link)
+    //   flies        -> one section per tier
+    //   others       -> a single grid
+    function slug(s) { return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
+    var groups;
+    if (cid === 'all') {
+      groups = Object.keys(COLLECTIONS).filter(function (k) { return k !== 'all'; }).map(function (k) {
+        var items = PRODUCTS.filter(function (p) { return p.cat === k; });
+        return { id: k, title: COLLECTIONS[k].crumb, sub: COLLECTIONS[k].lede, items: items.slice(0, 4),
+                 more: { href: shopUrl(k), label: 'Shop all ' + items.length + ' →' } };
       });
-      history.replaceState(null, '', shopUrl(cid, filter === 'all' ? '' : filter));
-      render();
-    });
-    document.getElementById('sort').addEventListener('change', function (e) { sort = e.target.value; render(); });
-    render();
+    } else if (col.groups) {
+      groups = col.groups.map(function (g) {
+        return { id: slug(g[0]), title: g[0], sub: g[1], items: PRODUCTS.filter(function (p) { return p.cat === cid && p.group === g[0]; }) };
+      });
+    } else {
+      groups = [{ items: PRODUCTS.filter(function (p) { return p.cat === cid; }) }];
+    }
+
+    sections.innerHTML = groups.map(function (g) {
+      var head = g.title
+        ? '<div class="section-head center"><h2 class="h">' + esc(g.title) + '</h2>' +
+          (g.sub ? '<p class="lede">' + esc(g.sub) + '</p>' : '') +
+          (g.more ? '<a class="link" href="' + g.more.href + '">' + esc(g.more.label) + '</a>' : '') + '</div>'
+        : '';
+      return '<section class="shop-group"' + (g.id ? ' id="' + g.id + '"' : '') + '>' + head +
+        '<div class="shop-grid">' + g.items.map(card).join('') + '</div></section>';
+    }).join('');
+    sections.querySelectorAll('.reveal').forEach(function (el) { el.classList.add('in'); });
+
+    // shop.html?c=flies&f=Tier 2 · Speak jumps to that tier
+    var f = params.get('f');
+    var target = f && document.getElementById(slug(f));
+    if (target) {
+      requestAnimationFrame(function () {
+        var top = target.getBoundingClientRect().top + window.scrollY - document.querySelector('.site-header').offsetHeight - 12;
+        window.scrollTo(0, top);
+      });
+    }
 
     var promise = document.getElementById('promise');
     if (col.promise) {

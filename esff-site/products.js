@@ -2,7 +2,8 @@
   Shop preview data.
     ESFF_COLLECTIONS: one entry per collection page (shop.html?c=<id>).
     ESFF_PRODUCTS:    one entry per product (product.html?p=<id>).
-  A product shows up in a collection when its `cat` matches, and in a filter pill when its `group` matches.
+  A product shows up in a collection when its `cat` matches. On the Flies page, products are split
+  into sections by `group` (the tier).
 
   THEME PREVIEW: names, prices, photos and the tier / course / instruction copy come from the homepage.
   Anything in [brackets], plus the option values and spec values, is sample content: copy the real
@@ -15,25 +16,22 @@
   window.ESFF_COLLECTIONS = {
     all: {
       title: 'Shop', eyebrow: 'Eat Sleep Fly Fish', crumb: 'All products',
-      lede: 'Competition-proven rods, flies and instruction from Roger Wilson. One system from first cast to reading the river.',
-      filters: ['Rods', 'Reels', 'Parts', 'Flies', 'Learn'], filterBy: 'group2'
+      lede: 'Competition-proven rods, flies and instruction from Roger Wilson. One system from first cast to reading the river.'
     },
     rods: {
       title: 'Highland Rod Company', eyebrow: 'Designed by Roger', crumb: 'Fly Rods & Reels',
       lede: 'Fished by 4 of 6 Fly Fishing Team USA World Team members. Built for the precision the system demands.',
-      filters: ['Rods', 'Reels', 'Parts'], filterBy: 'group',
       promise: [['Built to order', 'Stealth rods are built for you in 1–2 weeks.'], ['30-day guarantee', 'No questions asked, money back.'], ['Fished by Team USA', '4 of 6 World Team members fish Highland.']]
     },
     flies: {
       title: 'Flies', eyebrow: 'Every fly mapped to the framework', crumb: 'Flies',
       lede: 'Organized by signal intensity, not species or season. Know your mode, and the fly follows.',
-      filters: ['Tier 1 · Whisper', 'Tier 2 · Speak', 'Tier 3 · Shout', 'Tier 4 · Scream'], filterBy: 'group',
-      promise: [['Tier 1 · Whisper', 'Natural mode · clear water · wild fish'], ['Tier 2 · Speak', 'Transitional · mixed systems · cautious fish'], ['Tier 3 · Shout', 'Control mode · slight stain · reactive fish'], ['Tier 4 · Scream', 'Stocked fish · dirty water · forced reaction']]
+      // each tier gets its own section on the Flies page: [name, when to use it]
+      groups: [['Tier 1 · Whisper', 'Natural mode · clear water · wild fish'], ['Tier 2 · Speak', 'Transitional · mixed systems · cautious fish'], ['Tier 3 · Shout', 'Control mode · slight stain · reactive fish'], ['Tier 4 · Scream', 'Stocked fish · dirty water · forced reaction']]
     },
     learn: {
       title: 'Books & Instruction', eyebrow: 'The complete system', crumb: 'Books & Instruction',
-      lede: 'Sequential, not scattered. Read the books, take the course on the water, then fish it with Roger.',
-      filters: [], filterBy: 'group'
+      lede: 'Sequential, not scattered. Read the books, take the course on the water, then fish it with Roger.'
     }
   };
 
@@ -142,7 +140,7 @@
     t.flies.forEach(function (name) {
       P.push({
         id: 'fly-' + name.toLowerCase().replace(/[’']/g, '').replace(/[^a-z0-9]+/g, '-'),
-        cat: 'flies', group: t.name, group2: 'Flies',
+        cat: 'flies', group: t.name,
         title: name, kind: t.name, line: 'Flies · ' + t.name,
         price: null, tint: t.tint,
         short: t.name + ': ' + t.use + '.',
@@ -153,9 +151,6 @@
       });
     });
   });
-
-  // pill used on the all-products page
-  P.forEach(function (p) { if (!p.group2) p.group2 = p.group; });
 
   window.ESFF_PRODUCTS = P;
 })();
