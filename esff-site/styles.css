@@ -37,7 +37,7 @@ h1,h2,h3,p{margin:0}
 .header-row{display:flex;align-items:center;justify-content:space-between;gap:20px 32px;padding-top:16px;padding-bottom:16px}
 .brand{font-size:26px;letter-spacing:.1em;white-space:nowrap}
 .nav{display:flex;gap:28px;font-size:14px;font-weight:500;letter-spacing:.04em;white-space:nowrap}
-.nav a:hover{color:var(--amber)}
+.nav a:hover,.nav a[aria-current]{color:var(--amber)}
 .header-actions{display:flex;gap:10px}
 .icon-btn,.cart-btn{height:44px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid #3a5045;color:#fff;border-radius:2px;font-size:14px;cursor:pointer}
 .icon-btn{width:44px}

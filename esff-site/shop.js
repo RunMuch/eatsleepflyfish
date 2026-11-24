@@ -58,6 +58,17 @@
   }
   setCart(getCart());
 
+  // mark the main-nav link for the page we're on (Shop, Flies, Books & Course, Instruction)
+  (function () {
+    var page = location.pathname.split('/').pop() || 'index.html';
+    var key = page === 'shop.html' ? 'shop.html' + (params.get('c') && params.get('c') !== 'all' ? '?c=' + params.get('c') : '')
+            : page === 'product.html' ? 'product.html?p=' + params.get('p') : '';
+    if (key === 'shop.html?c=rods') key = 'shop.html'; // rods live under Shop
+    document.querySelectorAll('#primary-nav a').forEach(function (a) {
+      if (key && a.getAttribute('href') === key) a.setAttribute('aria-current', 'page');
+    });
+  })();
+
   // keep sticky bars just under the header
   var header = document.querySelector('.site-header');
   function setHeaderH() { if (header) document.documentElement.style.setProperty('--header-h', header.offsetHeight + 'px'); }
